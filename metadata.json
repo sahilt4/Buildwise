@@ -1,0 +1,6 @@
+{
+  "name": "BuildWise",
+  "description": "Smart Construction Material Tracking, Leftover Resale Marketplace & Multi-Site Labor Task Management Platform",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
