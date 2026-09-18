@@ -59,6 +59,8 @@ export const initialMaterials = [
     siteName: 'Sunrise Residency',
     status: 'Low Stock',
     threshold: 100,
+    required: 70,
+    condition: 'Good',
     costPerUnit: 390,
     lastUpdated: '2 hours ago',
     image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=500&auto=format&fit=crop&q=60'
@@ -75,6 +77,8 @@ export const initialMaterials = [
     siteName: 'Sunrise Residency',
     status: 'In Stock',
     threshold: 3,
+    required: 4,
+    condition: 'Like New',
     costPerUnit: 58000,
     lastUpdated: 'Yesterday',
     image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&auto=format&fit=crop&q=60'
@@ -91,6 +95,8 @@ export const initialMaterials = [
     siteName: 'Sunrise Residency',
     status: 'Low Stock',
     threshold: 100,
+    required: 60,
+    condition: 'Brand New',
     costPerUnit: 750,
     lastUpdated: '3 hours ago',
     image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=500&auto=format&fit=crop&q=60'
@@ -107,6 +113,8 @@ export const initialMaterials = [
     siteName: 'Green Valley Hub',
     status: 'In Stock',
     threshold: 50,
+    required: 100,
+    condition: 'Good',
     costPerUnit: 420,
     lastUpdated: '4 hours ago',
     image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500&auto=format&fit=crop&q=60'
@@ -123,6 +131,8 @@ export const initialMaterials = [
     siteName: 'Metro Line Depot',
     status: 'In Stock',
     threshold: 100,
+    required: 120,
+    condition: 'Brand New',
     costPerUnit: 85,
     lastUpdated: '1 day ago',
     image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop&q=60'
@@ -139,6 +149,8 @@ export const initialMaterials = [
     siteName: 'Green Valley Hub',
     status: 'Low Stock',
     threshold: 5,
+    required: 1,
+    condition: 'Good',
     costPerUnit: 8200,
     lastUpdated: 'Today, 8:30 AM',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=500&auto=format&fit=crop&q=60'
@@ -421,7 +433,8 @@ export const initialTasks = [
     priority: 'High',
     dueDate: 'Tomorrow',
     progress: 45,
-    status: 'In Progress'
+    status: 'In Progress',
+    prerequisiteId: 'task-1'
   },
   {
     id: 'task-3',
@@ -434,7 +447,8 @@ export const initialTasks = [
     priority: 'High',
     dueDate: 'Aug 22',
     progress: 15,
-    status: 'To Do'
+    status: 'To Do',
+    prerequisiteId: 'task-6'
   },
   {
     id: 'task-4',

@@ -60,6 +60,7 @@ export const AppProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [toasts, setToasts] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [undoStack, setUndoStack] = useState([]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -142,11 +143,25 @@ export const AppProvider = ({ children }) => {
   };
 
   const recordUsage = (matId, usedQty) => {
+    const prevMat = materials.find(m => m.id === matId);
+    if (!prevMat) return;
+
+    // Push the previous state of this material to the undo stack
+    setUndoStack(prev => [...prev, { type: 'MATERIAL_USAGE', prevState: { ...prevMat } }]);
+
+    const newUsed = Number(prevMat.used) + Number(usedQty);
+    const newRemaining = Math.max(0, Number(prevMat.purchased) - newUsed);
+    let newStatus = newRemaining <= Number(prevMat.threshold || 50) ? 'Low Stock' : 'In Stock';
+    let isSurplus = false;
+
+    // Waste-to-Value Classifier Rule
+    if (prevMat.required && newRemaining > prevMat.required && prevMat.condition && prevMat.condition !== 'Scrap') {
+      newStatus = 'Surplus Candidate';
+      isSurplus = true;
+    }
+
     setMaterials(prev => prev.map(m => {
       if (m.id === matId) {
-        const newUsed = Number(m.used) + Number(usedQty);
-        const newRemaining = Math.max(0, Number(m.purchased) - newUsed);
-        const newStatus = newRemaining <= Number(m.threshold || 50) ? 'Low Stock' : 'In Stock';
         return {
           ...m,
           used: newUsed,
@@ -158,10 +173,47 @@ export const AppProvider = ({ children }) => {
       return m;
     }));
 
-    const mat = materials.find(m => m.id === matId);
-    if (mat) {
-      logActivity(`Recorded usage of ${usedQty} ${mat.unit} of ${mat.name}`, 'material', 'info');
-      addToast(`✓ Recorded ${usedQty} ${mat.unit} usage for ${mat.name}`, 'success');
+    if (isSurplus) {
+      const surplusQty = newRemaining - prevMat.required;
+      const conditionFactor = prevMat.condition === 'Brand New' ? 0.8 : 0.6;
+      const estValue = surplusQty * (prevMat.costPerUnit || 100) * conditionFactor;
+      
+      setLeftovers(prev => {
+        if (prev.some(l => l.materialId === matId)) return prev;
+        return [{
+          id: 'left-' + Date.now(),
+          materialId: matId,
+          title: prevMat.name,
+          quantity: surplusQty + ' ' + prevMat.unit,
+          estimatedValue: estValue,
+          site: prevMat.siteName,
+          condition: prevMat.condition,
+          category: prevMat.category,
+          image: prevMat.image,
+          description: 'Automatically flagged surplus based on site requirements.'
+        }, ...prev];
+      });
+      addToast(`💡 Identified surplus ${prevMat.name}! Added to Waste-to-Value.`, 'info');
+    }
+
+    logActivity(`Recorded usage of ${usedQty} ${prevMat.unit} of ${prevMat.name}`, 'material', 'info');
+    addToast(`✓ Recorded ${usedQty} ${prevMat.unit} usage for ${prevMat.name}`, 'success');
+  };
+
+  const undoLastAction = () => {
+    if (undoStack.length === 0) return;
+    
+    // Pop top action
+    const newStack = [...undoStack];
+    const lastAction = newStack.pop();
+    setUndoStack(newStack);
+
+    if (lastAction.type === 'MATERIAL_USAGE') {
+      const prev = lastAction.prevState;
+      setMaterials(currentMaterials => 
+        currentMaterials.map(m => (m.id === prev.id ? prev : m))
+      );
+      addToast(`Reverted usage entry for ${prev.name}`, 'info');
     }
   };
 
@@ -243,19 +295,36 @@ export const AppProvider = ({ children }) => {
   };
 
   const updateTaskStatus = (taskId, newStatus, newProgress) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === taskId) {
-        const progress = newProgress !== undefined ? newProgress : (newStatus === 'Completed' ? 100 : t.progress);
-        return { ...t, status: newStatus, progress };
-      }
-      return t;
-    }));
+    let isBlocked = false;
 
-    if (newStatus === 'Completed') {
-      triggerConfetti();
-      addToast(`🎉 Task marked as completed!`, 'success');
-    } else {
-      addToast(`✓ Task updated to ${newStatus}`, 'info');
+    setTasks(prev => {
+      // Find the task to check DAG prerequisite
+      const task = prev.find(t => t.id === taskId);
+      if (task && task.prerequisiteId && newStatus === 'In Progress') {
+        const prereqTask = prev.find(t => t.id === task.prerequisiteId);
+        if (prereqTask && prereqTask.status !== 'Completed') {
+          isBlocked = true;
+          addToast(`Blocked! Prerequisite "${prereqTask.title}" must be completed first.`, 'danger');
+          return prev;
+        }
+      }
+
+      return prev.map(t => {
+        if (t.id === taskId) {
+          const progress = newProgress !== undefined ? newProgress : (newStatus === 'Completed' ? 100 : t.progress);
+          return { ...t, status: newStatus, progress };
+        }
+        return t;
+      });
+    });
+
+    if (!isBlocked) {
+      if (newStatus === 'Completed') {
+        triggerConfetti();
+        addToast(`🎉 Task marked as completed!`, 'success');
+      } else {
+        addToast(`✓ Task updated to ${newStatus}`, 'info');
+      }
     }
   };
 
@@ -403,6 +472,8 @@ export const AppProvider = ({ children }) => {
         removeToast,
         isMobileMenuOpen,
         setIsMobileMenuOpen,
+        undoStack,
+        undoLastAction,
         addMaterial,
         recordUsage,
         listLeftoverOnMarketplace,

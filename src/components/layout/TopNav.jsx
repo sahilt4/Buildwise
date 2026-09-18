@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Avatar } from '../common/Avatar';
+import { MinHeap } from '../../utils/priorityQueue';
 import {
   Menu,
   Search,
@@ -45,7 +46,17 @@ export const TopNav = () => {
     settings: 'System & Account Settings'
   };
 
-  const lowStockAlerts = materials.filter(m => m.status === 'Low Stock');
+  // Build the Min-Heap for low-stock alerts
+  const lowStockHeap = new MinHeap();
+  materials.forEach(m => {
+    if (m.status === 'Low Stock' && m.threshold > 0) {
+      lowStockHeap.add({ ...m, ratio: m.remaining / m.threshold });
+    } else if (m.status === 'Low Stock') {
+      lowStockHeap.add({ ...m, ratio: 0 }); // Fallback
+    }
+  });
+  const lowStockAlerts = lowStockHeap.toArray();
+
   const notificationCount = lowStockAlerts.length + 2;
 
   return (

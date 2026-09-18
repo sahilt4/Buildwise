@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export const MaterialsView = () => {
-  const { materials, leftovers, marketplace, sites, setActiveView, searchQuery, addToast } = useApp();
+  const { materials, leftovers, marketplace, sites, setActiveView, searchQuery, addToast, undoStack, undoLastAction } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSite, setSelectedSite] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
@@ -76,6 +76,16 @@ export const MaterialsView = () => {
           >
             Download Stock PDF
           </Button>
+
+          {undoStack.length > 0 && (
+            <Button
+              variant="secondary"
+              onClick={undoLastAction}
+              style={{ color: 'var(--amber-700)', borderColor: 'var(--amber-300)', backgroundColor: 'var(--amber-50)' }}
+            >
+              ↩ Undo Last Action
+            </Button>
+          )}
 
           <Button
             variant="secondary"

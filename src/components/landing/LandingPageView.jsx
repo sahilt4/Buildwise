@@ -175,7 +175,7 @@ export const LandingPageView = () => {
               { icon: Store, title: 'Leftover Resale Marketplace', desc: 'Monetize surplus tile boxes and steel offcuts directly with other builders in your city.' },
               { icon: ClipboardCheck, title: '1-Click Digital Attendance', desc: 'Instant mobile punch card and entrance QR code verification with automated payroll rolls.' },
               { icon: Users, title: 'Trade Crew Management', desc: 'Organize masons, carpenters, bar benders, and electricians with transparent skill profiles.' },
-              { icon: ListTodo, title: 'Daily Task Kanban', desc: 'Assign structural pours and masonry tasks with progress tracking and trade sign-offs.' },
+              { icon: ListTodo, title: 'Task & Site Assignment', desc: 'Assign structural pours and masonry tasks with progress tracking, trade sign-offs, and dependency checks.' },
               { icon: BarChart3, title: 'Material Yield & Cost Reports', desc: 'Audit purchasing efficiency, waste ratios, and capital recovered from circular resale.' }
             ].map((f, i) => (
               <div key={i} className="bw-card" style={{ padding: '1.5rem' }}>
