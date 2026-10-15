@@ -88,8 +88,11 @@ const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 
 // For any non-API route, serve Vite index.html (SPA client routing)
-app.get('*', (req, res, next) => {
-  if (req.url.startsWith('/api')) return next();
+// Compatible with Express 5 path-to-regexp v8
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || req.url.startsWith('/api')) {
+    return next();
+  }
   const indexHtml = path.join(distPath, 'index.html');
   res.sendFile(indexHtml, (err) => {
     if (err) {
