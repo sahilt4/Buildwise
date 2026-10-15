@@ -4,11 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "node backend/server.js",
+    "build": "vite build",
+    "build:render": "npm install && cd backend && npm install && cd .. && npm run build",
     "dev": "vite",
     "dev:backend": "node backend/server.js",
     "dev:full": "npx concurrently -n \"Vite,Backend\" -c \"cyan,yellow\" \"vite\" \"node backend/server.js\"",
     "seed": "node backend/seed.js",
-    "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
   },

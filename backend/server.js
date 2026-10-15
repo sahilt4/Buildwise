@@ -83,6 +83,31 @@ app.use('/api/attendance', attendanceRouter);
 app.use('/api/activities', activitiesRouter);
 app.use('/api/auth', authRouter);
 
+// Serve static frontend build in production or when dist exists
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// For any non-API route, serve Vite index.html (SPA client routing)
+app.get('*', (req, res, next) => {
+  if (req.url.startsWith('/api')) return next();
+  const indexHtml = path.join(distPath, 'index.html');
+  res.sendFile(indexHtml, (err) => {
+    if (err) {
+      res.status(200).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Buildwise API Server</title></head>
+          <body style="font-family:sans-serif;padding:2rem;text-align:center;">
+            <h2>🚀 Buildwise Backend API is Running</h2>
+            <p>API endpoints are active at <code>/api</code> (e.g. <a href="/api/health">/api/health</a>).</p>
+            <p>If you intended to deploy the frontend here, ensure <code>npm run build</code> was executed during build step.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+});
+
 // Centralized error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled Server Error:', err);
