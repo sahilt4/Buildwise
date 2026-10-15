@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const SitesView = () => {
-  const { sites, setActiveView, workers, materials, tasks, addToast } = useApp();
+  const { sites, setActiveView, workers, materials, tasks, addToast, updateSiteProgress } = useApp();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const handleDownloadSitesPDF = () => {
@@ -101,13 +101,37 @@ export const SitesView = () => {
                   <span>Supervisor: <strong>{site.supervisor}</strong></span>
                 </div>
 
-                {/* Progress bar */}
+                {/* Progress bar with quick edit */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', marginBottom: '0.35rem', fontWeight: 600 }}>
                     <span style={{ color: 'var(--text-muted)' }}>Construction Completion</span>
-                    <strong style={{ color: 'var(--navy-900)' }}>{site.progress}%</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                      <strong style={{ color: 'var(--navy-900)' }}>{site.progress}%</strong>
+                      <div style={{ display: 'inline-flex', gap: '0.2rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => updateSiteProgress(site.id, Math.max(0, site.progress - 5))}
+                          disabled={site.progress <= 0}
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '0.1rem 0.35rem', fontSize: '0.7rem', lineHeight: 1 }}
+                          title="Decrease 5% (Syncs to MongoDB Atlas)"
+                        >
+                          -5%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSiteProgress(site.id, Math.min(100, site.progress + 5))}
+                          disabled={site.progress >= 100}
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '0.1rem 0.35rem', fontSize: '0.7rem', lineHeight: 1 }}
+                          title="Increase 5% (Syncs to MongoDB Atlas)"
+                        >
+                          +5%
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <ProgressBar progress={site.progress} variant="warning" thickness="thick" />
+                  <ProgressBar progress={site.progress} variant={site.progress >= 80 ? 'success' : 'warning'} thickness="thick" />
                 </div>
 
                 {/* Stats grid */}

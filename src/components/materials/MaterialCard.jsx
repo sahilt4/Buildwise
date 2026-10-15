@@ -1,10 +1,12 @@
 import React from 'react';
+import { useApp } from '../../context/AppContext';
 import { Badge } from '../common/Badge';
 import { ProgressBar } from '../common/ProgressBar';
 import { Button } from '../common/Button';
-import { Clock, MapPin, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Clock, MapPin, ClipboardList, AlertTriangle, Trash2 } from 'lucide-react';
 
 export const MaterialCard = ({ material, onRecordUsage }) => {
+  const { deleteMaterial } = useApp();
   const percentUsed = Math.min(100, Math.round((material.used / material.purchased) * 100));
   const isLow = material.remaining <= material.threshold;
 
@@ -80,11 +82,24 @@ export const MaterialCard = ({ material, onRecordUsage }) => {
           variant="secondary"
           size="sm"
           icon={ClipboardList}
-          style={{ width: '100%' }}
+          style={{ flex: 1 }}
           onClick={() => onRecordUsage(material)}
         >
           Record Usage
         </Button>
+        <button
+          onClick={() => {
+            if (window.confirm(`Delete material "${material.name}"? This action syncs with MongoDB Atlas.`)) {
+              deleteMaterial(material.id);
+            }
+          }}
+          className="btn btn-secondary btn-sm"
+          style={{ padding: '0.35rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--border-color)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+          title={`Delete ${material.name}`}
+          aria-label={`Delete ${material.name}`}
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </div>
   );

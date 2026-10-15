@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:backend": "node backend/server.js",
+    "dev:full": "npx concurrently -n \"Vite,Backend\" -c \"cyan,yellow\" \"vite\" \"node backend/server.js\"",
+    "seed": "node backend/seed.js",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

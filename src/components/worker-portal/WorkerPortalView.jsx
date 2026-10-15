@@ -20,15 +20,25 @@ import {
 } from 'lucide-react';
 
 export const WorkerPortalView = () => {
-  const { workers, tasks, updateTaskStatus, toggleWorkerAttendance, scanQRAttendance } = useApp();
+  const { workers, tasks, updateTaskStatus, toggleWorkerAttendance, scanQRAttendance, currentUser, authUser } = useApp();
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
-  // Amit Patil's worker profile
-  const worker = workers.find(w => w.id === 'w-1') || workers[0];
+  // Match the actual logged-in worker in DB by workerId or name
+  const currentWorkerId = authUser?.workerId || currentUser?.workerId;
+  const currentWorkerName = authUser?.name || currentUser?.name;
+
+  const worker = workers.find(w => (currentWorkerId && w.id === currentWorkerId) || (currentWorkerName && w.name === currentWorkerName)) || {
+    id: currentWorkerId || 'w-1',
+    name: currentWorkerName || 'Amit Patil',
+    trade: 'Master Mason',
+    siteName: 'Sunrise Residency',
+    isCheckedIn: false,
+    checkInTime: null
+  };
   const isCheckedIn = worker.isCheckedIn;
 
-  // Amit's tasks
-  const myTasks = tasks.filter(t => t.workerId === worker.id || t.workerName === worker.name);
+  // Actual tasks assigned to this worker
+  const myTasks = tasks.filter(t => (worker.id && t.workerId === worker.id) || (worker.name && t.workerName === worker.name));
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '640px', margin: '0 auto' }}>

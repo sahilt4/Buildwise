@@ -21,11 +21,12 @@ import {
   ArrowRight,
   ShieldCheck,
   Lock,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 
 export const TasksView = () => {
-  const { tasks, sites, workers, searchQuery, updateTaskStatus } = useApp();
+  const { tasks, sites, workers, searchQuery, updateTaskStatus, deleteTask, userRole } = useApp();
   const [selectedSite, setSelectedSite] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedPriority, setSelectedPriority] = useState('All');
@@ -88,13 +89,15 @@ export const TasksView = () => {
         </div>
 
         <div className="page-actions">
-          <Button
-            variant="primary"
-            icon={Plus}
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Create Task
-          </Button>
+          {(userRole === 'manager' || userRole === 'engineer' || userRole === 'builder') && (
+            <Button
+              variant="primary"
+              icon={Plus}
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Assign New Task
+            </Button>
+          )}
         </div>
       </div>
 
@@ -356,22 +359,37 @@ export const TasksView = () => {
                     </td>
 
                     <td className="bw-td" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <button
-                        onClick={() => updateTaskStatus(task.id, nextStatus)}
-                        disabled={isBlocked}
-                        className="btn btn-sm"
-                        style={{
-                          background: isBlocked ? 'var(--gray-200)' : 'var(--amber-50)',
-                          color: isBlocked ? 'var(--gray-500)' : 'var(--amber-800)',
-                          border: `1px solid ${isBlocked ? 'var(--gray-300)' : 'var(--amber-300)'}`,
-                          fontWeight: 600,
-                          fontSize: '0.78rem',
-                          cursor: isBlocked ? 'not-allowed' : 'pointer'
-                        }}
-                        title={isBlocked ? `Complete prerequisite (${prereqTaskName}) first` : `Advance to ${nextStatus}`}
-                      >
-                        {isBlocked ? 'Locked (Prereq)' : `→ ${nextStatus}`}
-                      </button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <button
+                          onClick={() => updateTaskStatus(task.id, nextStatus)}
+                          disabled={isBlocked}
+                          className="btn btn-sm"
+                          style={{
+                            background: isBlocked ? 'var(--gray-200)' : 'var(--amber-50)',
+                            color: isBlocked ? 'var(--gray-500)' : 'var(--amber-800)',
+                            border: `1px solid ${isBlocked ? 'var(--gray-300)' : 'var(--amber-300)'}`,
+                            fontWeight: 600,
+                            fontSize: '0.78rem',
+                            cursor: isBlocked ? 'not-allowed' : 'pointer'
+                          }}
+                          title={isBlocked ? `Complete prerequisite (${prereqTaskName}) first` : `Advance to ${nextStatus}`}
+                        >
+                          {isBlocked ? 'Locked (Prereq)' : `→ ${nextStatus}`}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete task "${task.title}"? This syncs with MongoDB Atlas.`)) {
+                              deleteTask(task.id);
+                            }
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '0.35rem 0.55rem', color: 'var(--danger)', borderColor: 'var(--border-color)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          title={`Delete ${task.title}`}
+                          aria-label={`Delete ${task.title}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

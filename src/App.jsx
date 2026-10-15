@@ -18,9 +18,19 @@ import { NotificationsView } from './components/notifications/NotificationsView'
 import { SettingsView } from './components/settings/SettingsView';
 import { WorkerPortalView } from './components/worker-portal/WorkerPortalView';
 import { LandingPageView } from './components/landing/LandingPageView';
+import { LoginView } from './components/auth/LoginView';
 
 const AppContent = () => {
-  const { activeView, userRole, isLandingPage } = useApp();
+  const { activeView, userRole, isLandingPage, isLoginModalOpen, setIsLoginModalOpen, loginTargetRole } = useApp();
+
+  if (isLoginModalOpen) {
+    return (
+      <>
+        <LoginView initialRole={loginTargetRole} onClose={() => setIsLoginModalOpen(false)} />
+        <ToastContainer />
+      </>
+    );
+  }
 
   if (isLandingPage) {
     return (
@@ -33,7 +43,13 @@ const AppContent = () => {
 
   // Render view router
   const renderCurrentView = () => {
-    // If worker role is selected and viewing Dashboard, give the streamlined Worker Mobile Portal
+    // If worker role is active and attempting to access managerial pages, guard & reroute to WorkerPortalView
+    const workerRestrictedViews = ['sites', 'materials', 'marketplace', 'workers', 'reports', 'settings'];
+    if (userRole === 'worker' && workerRestrictedViews.includes(activeView)) {
+      return <WorkerPortalView />;
+    }
+
+    // If worker role is selected and viewing Dashboard, render Worker Portal
     if (userRole === 'worker' && activeView === 'dashboard') {
       return <WorkerPortalView />;
     }

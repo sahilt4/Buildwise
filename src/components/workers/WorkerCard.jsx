@@ -1,10 +1,13 @@
 import React from 'react';
+import { useApp } from '../../context/AppContext';
 import { Avatar } from '../common/Avatar';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
-import { MapPin, Phone, User, CheckCircle, Clock } from 'lucide-react';
+import { MapPin, Phone, User, CheckCircle, Clock, Trash2 } from 'lucide-react';
 
 export const WorkerCard = ({ worker, onViewProfile, onToggleAttendance }) => {
+  const { deleteWorker } = useApp();
+
   return (
     <div className="worker-card bw-card--interactive">
       <div className="worker-card-header">
@@ -53,7 +56,7 @@ export const WorkerCard = ({ worker, onViewProfile, onToggleAttendance }) => {
       </div>
 
       {/* Action buttons */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', marginTop: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '0.4rem', marginTop: 'auto' }}>
         <Button
           variant="secondary"
           size="sm"
@@ -64,11 +67,24 @@ export const WorkerCard = ({ worker, onViewProfile, onToggleAttendance }) => {
         <a
           href={`tel:${worker.phone}`}
           className="btn btn-secondary btn-sm"
-          style={{ padding: '0.35rem 0.6rem', color: 'var(--navy-800)', textDecoration: 'none' }}
+          style={{ padding: '0.35rem 0.6rem', color: 'var(--navy-800)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           title={`Call ${worker.phone}`}
         >
           <Phone size={14} />
         </a>
+        <button
+          onClick={() => {
+            if (window.confirm(`Remove worker "${worker.name}" from roster? This syncs with MongoDB Atlas.`)) {
+              deleteWorker(worker.id);
+            }
+          }}
+          className="btn btn-secondary btn-sm"
+          style={{ padding: '0.35rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--border-color)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+          title={`Remove ${worker.name}`}
+          aria-label={`Remove ${worker.name}`}
+        >
+          <Trash2 size={14} />
+        </button>
       </div>
     </div>
   );

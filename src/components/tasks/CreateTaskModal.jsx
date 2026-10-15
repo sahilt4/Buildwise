@@ -89,11 +89,19 @@ export const CreateTaskModal = ({ isOpen, onClose }) => {
             <select
               className="form-select"
               value={formData.workerId}
-              onChange={(e) => setFormData({ ...formData, workerId: e.target.value })}
+              onChange={(e) => {
+                const selected = workers.find(w => w.id === e.target.value);
+                setFormData({
+                  ...formData,
+                  workerId: e.target.value,
+                  // Auto-align site if worker is already assigned to a site
+                  siteId: (selected && selected.siteId) ? selected.siteId : formData.siteId
+                });
+              }}
             >
               {workers.map(w => (
                 <option key={w.id} value={w.id}>
-                  {w.name} ({w.trade})
+                  {w.name} • {w.trade} {w.isCheckedIn ? '🟢 (Present On Site)' : '⚪ (Off Shift)'}
                 </option>
               ))}
             </select>

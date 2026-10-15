@@ -11,8 +11,9 @@ import {
   UserCheck,
   ChevronDown,
   X,
-  ExternalLink,
-  Sparkles
+  Sparkles,
+  Database,
+  CloudCheck
 } from 'lucide-react';
 
 export const TopNav = () => {
@@ -27,7 +28,13 @@ export const TopNav = () => {
     setSearchQuery,
     activities,
     materials,
-    setIsLandingPage
+    isBackendConnected,
+    setIsLandingPage,
+    setIsLoginModalOpen,
+    setLoginTargetRole,
+    logout,
+    authUser,
+    login
   } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -52,11 +59,10 @@ export const TopNav = () => {
     if (m.status === 'Low Stock' && m.threshold > 0) {
       lowStockHeap.add({ ...m, ratio: m.remaining / m.threshold });
     } else if (m.status === 'Low Stock') {
-      lowStockHeap.add({ ...m, ratio: 0 }); // Fallback
+      lowStockHeap.add({ ...m, ratio: 0 });
     }
   });
   const lowStockAlerts = lowStockHeap.toArray();
-
   const notificationCount = lowStockAlerts.length + 2;
 
   return (
@@ -66,12 +72,13 @@ export const TopNav = () => {
           className="btn-icon mobile-menu-toggle"
           onClick={() => setIsMobileMenuOpen(prev => !prev)}
           aria-label="Open navigation menu"
+          style={{ color: 'var(--text-secondary)' }}
         >
           <Menu size={22} />
         </button>
 
         <div className="breadcrumbs">
-          <span style={{ color: 'var(--text-muted)' }}>Buildwise</span>
+          <span style={{ color: 'var(--header-muted)' }}>Buildwise</span>
           <span>/</span>
           <span className="current">{viewTitles[activeView] || 'Overview'}</span>
         </div>
@@ -80,36 +87,70 @@ export const TopNav = () => {
       <div className="topbar-right">
         {/* Global Search */}
         <div className="search-input-wrapper" style={{ width: '220px', display: window.innerWidth < 640 ? 'none' : 'flex' }}>
-          <Search size={15} />
+          <Search size={15} style={{ color: 'var(--gray-400)' }} />
           <input
             type="text"
             className="form-input"
-            style={{ padding: '0.45rem 0.75rem 0.45rem 2.2rem', fontSize: '0.82rem' }}
+            style={{
+              padding: '0.45rem 0.75rem 0.45rem 2.2rem',
+              fontSize: '0.82rem'
+            }}
             placeholder="Search materials, sites, crew..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
+        {/* Database Status indicator */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
+            padding: '0.25rem 0.6rem',
+            borderRadius: 'var(--radius-full)',
+            background: isBackendConnected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+            border: `1px solid ${isBackendConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            color: isBackendConnected ? '#34d399' : '#fbbf24'
+          }}
+          title={isBackendConnected ? 'Connected to MongoDB Atlas Backend' : 'Running on Local Telemetry Cache'}
+        >
+          <Database size={12} />
+          <span style={{ display: window.innerWidth < 1024 ? 'none' : 'inline' }}>
+            {isBackendConnected ? 'Atlas Cloud' : 'Local Cache'}
+          </span>
+        </div>
+
         {/* Role Switcher Pill Bar */}
-        <div className="role-switcher-container" title="Switch user perspective to preview role experiences">
+        <div className="role-switcher-container" title="Click any role to switch account & sign in">
           <button
             className={`role-tab-btn ${userRole === 'builder' ? 'active' : ''}`}
-            onClick={() => setUserRole('builder')}
+            onClick={() => {
+              setLoginTargetRole('builder');
+              setIsLoginModalOpen(true);
+            }}
           >
             <Briefcase size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
             Builder
           </button>
           <button
-            className={`role-tab-btn ${userRole === 'engineer' ? 'active' : ''}`}
-            onClick={() => setUserRole('engineer')}
+            className={`role-tab-btn ${userRole === 'manager' || userRole === 'engineer' ? 'active' : ''}`}
+            onClick={() => {
+              setLoginTargetRole('manager');
+              setIsLoginModalOpen(true);
+            }}
           >
             <HardHat size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-            Engineer
+            Site Mgr
           </button>
           <button
             className={`role-tab-btn ${userRole === 'worker' ? 'active' : ''}`}
-            onClick={() => setUserRole('worker')}
+            onClick={() => {
+              setLoginTargetRole('worker');
+              setIsLoginModalOpen(true);
+            }}
           >
             <UserCheck size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
             Worker
@@ -123,14 +164,15 @@ export const TopNav = () => {
           onClick={() => setIsLandingPage(true)}
           title="View Landing Page"
         >
-          <Sparkles size={14} style={{ color: 'var(--amber-600)' }} />
-          <span style={{ display: window.innerWidth < 800 ? 'none' : 'inline' }}>Landing Page</span>
+          <Sparkles size={14} style={{ color: 'var(--amber-500)' }} />
+          <span style={{ display: window.innerWidth < 800 ? 'none' : 'inline' }}>Landing</span>
         </button>
 
         {/* Notification Bell with Dropdown */}
         <div style={{ position: 'relative' }}>
           <button
             className="btn-icon notification-btn"
+            style={{ color: 'var(--text-secondary)' }}
             onClick={() => setShowNotifications(prev => !prev)}
             aria-label="Notifications"
           >
@@ -221,14 +263,14 @@ export const TopNav = () => {
           >
             <Avatar src={currentUser.avatar} name={currentUser.name} size="md" status="active" />
             <div style={{ display: window.innerWidth < 900 ? 'none' : 'block', textAlign: 'left' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)', lineHeight: 1.1 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.1 }}>
                 {currentUser.name}
               </div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                 {currentUser.role}
               </div>
             </div>
-            <ChevronDown size={14} style={{ color: 'var(--gray-400)' }} />
+            <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
           </div>
 
           {showUserDropdown && (
@@ -248,39 +290,34 @@ export const TopNav = () => {
               }}
             >
               <div style={{ paddingBottom: '0.5rem', marginBottom: '0.5rem', borderBottom: '1px solid var(--border-color)' }}>
-                <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--navy-900)' }}>{currentUser.name}</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{currentUser.company}</div>
-              </div>
-
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>
-                Switch Perspective:
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--navy-900)' }}>{currentUser.name}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{currentUser.company}</div>
               </div>
 
               <button
-                className={`sidebar-link ${userRole === 'builder' ? 'active' : ''}`}
-                style={{ color: 'var(--text-primary)', padding: '0.45rem 0.5rem', width: '100%' }}
-                onClick={() => { setUserRole('builder'); setShowUserDropdown(false); }}
+                className="dropdown-item"
+                onClick={() => { setActiveView('settings'); setShowUserDropdown(false); }}
               >
-                <Briefcase size={16} />
-                <span>Rajesh (Builder)</span>
+                Settings & Preferences
               </button>
-
               <button
-                className={`sidebar-link ${userRole === 'engineer' ? 'active' : ''}`}
-                style={{ color: 'var(--text-primary)', padding: '0.45rem 0.5rem', width: '100%' }}
-                onClick={() => { setUserRole('engineer'); setShowUserDropdown(false); }}
+                className="dropdown-item"
+                onClick={() => { setIsLoginModalOpen(true); setShowUserDropdown(false); }}
               >
-                <HardHat size={16} />
-                <span>Suresh (Site Eng.)</span>
+                Switch Account / Login
               </button>
-
               <button
-                className={`sidebar-link ${userRole === 'worker' ? 'active' : ''}`}
-                style={{ color: 'var(--text-primary)', padding: '0.45rem 0.5rem', width: '100%' }}
-                onClick={() => { setUserRole('worker'); setShowUserDropdown(false); }}
+                className="dropdown-item"
+                onClick={() => { setIsLandingPage(true); setShowUserDropdown(false); }}
               >
-                <UserCheck size={16} />
-                <span>Amit (Mason Worker)</span>
+                Landing Page Preview
+              </button>
+              <button
+                className="dropdown-item"
+                style={{ color: 'var(--danger)', fontWeight: 600 }}
+                onClick={() => { logout(); setIsLoginModalOpen(true); setShowUserDropdown(false); }}
+              >
+                Sign Out
               </button>
             </div>
           )}

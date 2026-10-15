@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 
 export const AttendanceView = () => {
-  const { attendanceLogs, workers, addToast } = useApp();
+  const { attendanceLogs, workers, addToast, userRole } = useApp();
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
+  const isWorker = userRole === 'worker';
   const presentWorkers = workers.filter(w => w.isCheckedIn).length;
   const totalWorkers = workers.length;
 
@@ -48,8 +49,13 @@ export const AttendanceView = () => {
       {/* Header */}
       <div className="page-header">
         <div className="page-header-text">
-          <h1>Digital Attendance & Muster Roll</h1>
-          <p>Instant mobile punch card, entrance QR verification, and automated contractor payroll records.</p>
+          <h1>Digital Attendance Muster & Workforce Report</h1>
+          <p>
+            {isWorker
+              ? 'Personal shift punch card and entrance QR verification.'
+              : 'Official daily muster roll, verified worker check-ins, time logs, and payroll records (Audited Report View).'
+            }
+          </p>
         </div>
 
         <div className="page-actions">
@@ -69,18 +75,22 @@ export const AttendanceView = () => {
             Download PDF Muster Roll
           </Button>
 
-          <Button
-            variant="primary"
-            icon={QrCode}
-            onClick={() => setIsQRScannerOpen(true)}
-          >
-            Scan Site QR
-          </Button>
+          {isWorker && (
+            <Button
+              variant="primary"
+              icon={QrCode}
+              onClick={() => setIsQRScannerOpen(true)}
+            >
+              Scan Site QR
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Central Big Punch Card */}
-      <AttendancePunchCard onOpenQRScanner={() => setIsQRScannerOpen(true)} />
+      {/* Central Big Punch Card ONLY rendered for Field Workers */}
+      {isWorker && (
+        <AttendancePunchCard onOpenQRScanner={() => setIsQRScannerOpen(true)} />
+      )}
 
       {/* Daily Muster Register Log */}
       <div className="bw-card" style={{ marginTop: '2rem' }}>

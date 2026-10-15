@@ -59,10 +59,22 @@ export const LandingPageView = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
-            onClick={() => handleLaunchApp('worker')}
+            onClick={() => {
+              handleLaunchApp('worker');
+            }}
             style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}
           >
             Worker App
+          </button>
+
+          <button
+            onClick={() => {
+              setIsLandingPage(false);
+              setIsLoginModalOpen(true);
+            }}
+            style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--navy-900)' }}
+          >
+            Sign In
           </button>
 
           <Button
@@ -70,7 +82,7 @@ export const LandingPageView = () => {
             iconRight={ArrowRight}
             onClick={() => handleLaunchApp('builder')}
           >
-            Open Dashboard
+            Launch Platform
           </Button>
         </div>
       </nav>

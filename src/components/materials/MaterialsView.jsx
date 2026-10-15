@@ -19,11 +19,12 @@ import {
   Search,
   AlertTriangle,
   Boxes,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 
 export const MaterialsView = () => {
-  const { materials, leftovers, marketplace, sites, setActiveView, searchQuery, addToast, undoStack, undoLastAction } = useApp();
+  const { materials, leftovers, marketplace, sites, setActiveView, searchQuery, addToast, undoStack, undoLastAction, deleteMaterial } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedSite, setSelectedSite] = useState('All');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
@@ -237,14 +238,29 @@ export const MaterialsView = () => {
                         {isLow ? 'Low Stock' : 'In Stock'}
                       </Badge>
                     </td>
-                    <td className="bw-td" style={{ textAlign: 'right' }}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleOpenUsageModal(mat)}
-                      >
-                        Record
-                      </Button>
+                    <td className="bw-td" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleOpenUsageModal(mat)}
+                        >
+                          Record
+                        </Button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Delete material "${mat.name}"? This action syncs with MongoDB Atlas.`)) {
+                              deleteMaterial(mat.id);
+                            }
+                          }}
+                          className="btn btn-secondary btn-sm"
+                          style={{ padding: '0.35rem 0.55rem', color: 'var(--danger)', borderColor: 'var(--border-color)' }}
+                          title={`Delete ${mat.name}`}
+                          aria-label={`Delete ${mat.name}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

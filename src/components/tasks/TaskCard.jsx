@@ -3,10 +3,10 @@ import { useApp } from '../../context/AppContext';
 import { Badge } from '../common/Badge';
 import { ProgressBar } from '../common/ProgressBar';
 import { Avatar } from '../common/Avatar';
-import { MapPin, Calendar, CheckSquare, Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, CheckSquare, Clock, ArrowRight, AlertCircle, Trash2 } from 'lucide-react';
 
 export const TaskCard = ({ task }) => {
-  const { updateTaskStatus, workers, tasks } = useApp();
+  const { updateTaskStatus, deleteTask, workers, tasks } = useApp();
   const worker = workers.find(w => w.id === task.workerId) || { name: task.workerName, avatar: null };
 
   const priorityVariant = task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'warning' : 'neutral';
@@ -97,25 +97,40 @@ export const TaskCard = ({ task }) => {
           <Calendar size={12} /> Due: <strong>{task.dueDate}</strong>
         </span>
 
-        <button
-          onClick={() => updateTaskStatus(task.id, nextStatus)}
-          disabled={isBlocked}
-          style={{
-            color: isBlocked ? 'var(--gray-500)' : 'var(--amber-700)',
-            fontWeight: 700,
-            fontSize: '0.75rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.2rem',
-            background: isBlocked ? 'var(--gray-200)' : 'var(--amber-50)',
-            padding: '0.2rem 0.5rem',
-            borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${isBlocked ? 'var(--gray-300)' : 'var(--amber-200)'}`,
-            cursor: isBlocked ? 'not-allowed' : 'pointer'
-          }}
-        >
-          <span>→ {nextStatus}</span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <button
+            onClick={() => updateTaskStatus(task.id, nextStatus)}
+            disabled={isBlocked}
+            style={{
+              color: isBlocked ? 'var(--gray-500)' : 'var(--amber-700)',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.2rem',
+              background: isBlocked ? 'var(--gray-200)' : 'var(--amber-50)',
+              padding: '0.2rem 0.5rem',
+              borderRadius: 'var(--radius-sm)',
+              border: `1px solid ${isBlocked ? 'var(--gray-300)' : 'var(--amber-200)'}`,
+              cursor: isBlocked ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <span>→ {nextStatus}</span>
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm(`Delete task "${task.title}"? This syncs with MongoDB Atlas.`)) {
+                deleteTask(task.id);
+              }
+            }}
+            className="btn btn-secondary btn-sm"
+            style={{ padding: '0.2rem 0.45rem', color: 'var(--danger)', borderColor: 'var(--border-color)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            title={`Delete ${task.title}`}
+            aria-label={`Delete ${task.title}`}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
     </div>
   );

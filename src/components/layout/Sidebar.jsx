@@ -30,24 +30,30 @@ export const Sidebar = () => {
     leftovers,
     isMobileMenuOpen,
     setIsMobileMenuOpen,
-    setIsLandingPage
+    setIsLandingPage,
+    logout,
+    setIsLoginModalOpen
   } = useApp();
 
   const lowStockCount = materials.filter(m => m.status === 'Low Stock').length;
   const leftoverCount = leftovers.length;
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'sites', label: 'Sites', icon: Building2 },
-    { id: 'materials', label: 'Materials', icon: Boxes, badge: lowStockCount ? `${lowStockCount} Low` : null },
-    { id: 'marketplace', label: 'Marketplace', icon: Store, badge: 'Resale', highlight: true },
-    { id: 'workers', label: 'Workers', icon: Users },
-    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
-    { id: 'tasks', label: 'Tasks', icon: ListTodo },
-    { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'settings', label: 'Settings', icon: Settings },
+  // Role-scoped navigation menus
+  const allNavItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['builder', 'manager', 'engineer', 'worker'] },
+    { id: 'sites', label: 'Sites', icon: Building2, roles: ['builder', 'manager', 'engineer'] },
+    { id: 'materials', label: 'Materials', icon: Boxes, badge: lowStockCount ? `${lowStockCount} Low` : null, roles: ['builder', 'manager', 'engineer'] },
+    { id: 'marketplace', label: 'Marketplace', icon: Store, badge: 'Resale', highlight: true, roles: ['builder', 'manager', 'engineer'] },
+    { id: 'workers', label: 'Crew & Workers', icon: Users, roles: ['builder', 'manager', 'engineer'] },
+    { id: 'attendance', label: userRole === 'worker' ? 'My Attendance' : 'Attendance', icon: ClipboardCheck, roles: ['builder', 'manager', 'engineer', 'worker'] },
+    { id: 'tasks', label: userRole === 'worker' ? 'My Assigned Tasks' : 'Tasks & Operations', icon: ListTodo, roles: ['builder', 'manager', 'engineer', 'worker'] },
+    { id: 'reports', label: 'Reports & Audits', icon: BarChart3, roles: ['builder', 'manager', 'engineer'] },
+    { id: 'notifications', label: 'Notifications', icon: Bell, roles: ['builder', 'manager', 'engineer', 'worker'] },
+    { id: 'settings', label: 'Settings', icon: Settings, roles: ['builder', 'manager', 'engineer'] },
   ];
+
+  const currentNormalizedRole = userRole === 'engineer' ? 'manager' : userRole;
+  const navItems = allNavItems.filter(item => item.roles.includes(currentNormalizedRole));
 
   const handleNavClick = (viewId) => {
     setActiveView(viewId);
@@ -105,17 +111,17 @@ export const Sidebar = () => {
               style={{
                 marginTop: '1.25rem',
                 padding: '0.85rem',
-                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.08))',
-                border: '1px solid rgba(245, 158, 11, 0.25)',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.05))',
+                border: '1px solid rgba(245, 158, 11, 0.2)',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--amber-400)', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--amber-600)', fontSize: '0.78rem', fontWeight: 700, marginBottom: '0.25rem' }}>
                 <Sparkles size={14} />
                 <span>Recover Waste Value</span>
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--gray-300)', lineHeight: 1.3 }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>
                 {leftoverCount} surplus items available to list on Marketplace.
               </div>
             </div>
@@ -126,13 +132,8 @@ export const Sidebar = () => {
         <div className="sidebar-footer">
           <div
             className="user-profile-pill"
-            onClick={() => {
-              // Cycle through roles on avatar click for ease of testing
-              const roles = ['builder', 'engineer', 'worker'];
-              const nextRole = roles[(roles.indexOf(userRole) + 1) % roles.length];
-              setUserRole(nextRole);
-            }}
-            title="Click to quickly switch role (Builder / Engineer / Worker)"
+            onClick={() => setIsLoginModalOpen(true)}
+            title="Click to Switch User / Sign In with another account"
           >
             <Avatar src={currentUser.avatar} name={currentUser.name} size="md" status="active" />
             <div className="user-profile-info">
@@ -142,21 +143,25 @@ export const Sidebar = () => {
             <ArrowUpRight size={14} style={{ color: 'var(--gray-400)' }} />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-subtle)' }}>
             <button
-              onClick={() => setIsLandingPage(true)}
-              style={{ fontSize: '0.75rem', color: 'var(--amber-400)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}
+              onClick={() => setIsLoginModalOpen(true)}
+              style={{ fontSize: '0.75rem', color: 'var(--amber-600)', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 600 }}
             >
               <Sparkles size={12} />
-              Landing Page
+              Switch Role
             </button>
 
             <button
-              onClick={() => setIsLandingPage(true)}
-              style={{ fontSize: '0.75rem', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              onClick={() => {
+                logout();
+                setIsLoginModalOpen(true);
+              }}
+              style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              title="Logout current session"
             >
               <LogOut size={12} />
-              Exit
+              Logout
             </button>
           </div>
         </div>

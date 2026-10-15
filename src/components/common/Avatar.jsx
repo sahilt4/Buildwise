@@ -17,11 +17,7 @@ export const Avatar = ({
 
   return (
     <div className={`avatar avatar-${size} ${className}`} title={name}>
-      {src ? (
-        <img src={src} alt={name} onError={(e) => { e.target.style.display = 'none'; }} />
-      ) : (
-        <span>{getInitials(name)}</span>
-      )}
+      <span>{getInitials(name)}</span>
       {status && <span className={`avatar-status-dot ${status}`} />}
     </div>
   );
