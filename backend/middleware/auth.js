@@ -92,15 +92,15 @@ export const requireAuth = async (req, res, next) => {
       });
     }
 
-    // Attach authenticated user identity to request
+    // Attach authenticated user identity to request (prefer token-specific worker identity for shared demo logins)
     req.user = {
       id: user.id,
       email: user.email,
-      name: user.name,
+      name: (decoded.workerId && decoded.name) ? decoded.name : user.name,
       role: user.role,
-      assignedSiteIds: user.assignedSiteIds || [],
+      assignedSiteIds: (decoded.assignedSiteIds && decoded.assignedSiteIds.length > 0) ? decoded.assignedSiteIds : (user.assignedSiteIds || []),
       assignedProjectIds: user.assignedProjectIds || [],
-      workerId: user.workerId || '',
+      workerId: decoded.workerId !== undefined ? decoded.workerId : (user.workerId || ''),
       company: user.company || ''
     };
 

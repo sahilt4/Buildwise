@@ -5,6 +5,8 @@ import { Activity } from '../models/Activity.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
+import { Site } from '../models/Site.js';
+
 const router = express.Router();
 
 // GET attendance records (Worker sees own attendance; Manager sees assigned site attendance; Builder sees all)
@@ -19,11 +21,16 @@ router.get('/', requireAuth, async (req, res) => {
       ];
     } else if (req.user.role === 'manager') {
       if (req.user.assignedSiteIds?.length > 0) {
-        // Find workers in assigned sites
+        // Resolve sites and workers belonging to assigned sites
+        const assignedSites = await Site.find({ id: { $in: req.user.assignedSiteIds } }).select('name id');
+        const assignedSiteNames = assignedSites.map(s => s.name);
         const siteWorkers = await Worker.find({ siteId: { $in: req.user.assignedSiteIds } }).select('id name');
         const workerIds = siteWorkers.map(w => w.id);
         const workerNames = siteWorkers.map(w => w.name);
+
         filter.$or = [
+          { siteId: { $in: req.user.assignedSiteIds } },
+          { siteName: { $in: assignedSiteNames } },
           { workerId: { $in: workerIds } },
           { workerName: { $in: workerNames } }
         ];
@@ -53,6 +60,9 @@ router.post('/scan-qr', requireAuth, async (req, res) => {
     }
 
     let worker = await Worker.findOne({ id: targetWorkerId });
+    if (!worker && req.user.name) {
+      worker = await Worker.findOne({ name: req.user.name });
+    }
     if (!worker) {
       worker = await Worker.findOne();
     }
@@ -67,12 +77,14 @@ router.post('/scan-qr', requireAuth, async (req, res) => {
     const workerName = worker ? worker.name : req.user.name;
     const trade = worker ? worker.trade : 'Master Mason';
     const site = siteName || (worker ? worker.siteName : 'Sunrise Residency');
+    const resolvedSiteId = worker?.siteId || (req.user.assignedSiteIds && req.user.assignedSiteIds[0]) || 'site-1';
 
     const newLog = await AttendanceLog.create({
       id: `att-${Date.now()}`,
       workerId: worker ? worker.id : targetWorkerId,
       workerName,
       trade,
+      siteId: resolvedSiteId,
       siteName: site,
       time: timeStr,
       date: 'Today',

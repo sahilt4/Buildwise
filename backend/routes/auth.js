@@ -39,29 +39,36 @@ router.post('/login', async (req, res) => {
 
     // If worker logging in with their actual name, find their unique worker profile or create one
     const { workerName, trade } = req.body;
+    let effectiveName = user.name;
+    let effectiveWorkerId = user.workerId;
+    let effectiveSiteIds = user.assignedSiteIds || ['site-1'];
+
     if (user.role === 'worker' && workerName && workerName.trim()) {
       const cleanName = workerName.trim();
-      user.name = cleanName;
+      effectiveName = cleanName;
 
       // Look up if a worker record already exists with this name
       let workerRecord = await Worker.findOne({ name: { $regex: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
       if (workerRecord) {
-        user.workerId = workerRecord.id;
-        if (trade) {
+        effectiveWorkerId = workerRecord.id;
+        if (workerRecord.siteId) {
+          effectiveSiteIds = [workerRecord.siteId];
+        }
+        if (trade && workerRecord.trade !== trade) {
           workerRecord.trade = trade;
           await workerRecord.save();
         }
       } else {
         // Create a unique new worker record in MongoDB so the manager/builder see them in the roster and can assign tasks
         const newWorkerId = `w-${Date.now()}`;
-        user.workerId = newWorkerId;
+        effectiveWorkerId = newWorkerId;
         await Worker.create({
           id: newWorkerId,
           name: cleanName,
           trade: trade || 'Masonry / General Construction',
           category: 'Skilled Trades',
-          siteId: (user.assignedSiteIds && user.assignedSiteIds[0]) || 'site-1',
+          siteId: 'site-1',
           siteName: 'Sunrise Residency',
           attendanceRate: 100,
           currentTask: 'Available for Assignment',
@@ -76,7 +83,15 @@ router.post('/login', async (req, res) => {
     user.lastLogin = new Date();
     await user.save();
 
-    const token = generateToken(user);
+    // Generate JWT token carrying the specific worker identity session
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      name: effectiveName,
+      workerId: effectiveWorkerId,
+      assignedSiteIds: effectiveSiteIds
+    });
 
     // Audit log
     await AuditLog.create({
@@ -85,9 +100,9 @@ router.post('/login', async (req, res) => {
       resourceType: 'User',
       resourceId: user.id,
       actorId: user.id,
-      actorName: user.name,
+      actorName: effectiveName,
       actorRole: user.role,
-      details: { email: user.email, role: user.role },
+      details: { email: user.email, role: user.role, workerId: effectiveWorkerId },
       ip: req.ip || '127.0.0.1'
     });
 
@@ -96,14 +111,14 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        name: effectiveName,
         role: user.role,
         company: user.company,
         avatar: user.avatar,
         phone: user.phone,
-        assignedSiteIds: user.assignedSiteIds,
+        assignedSiteIds: effectiveSiteIds,
         assignedProjectIds: user.assignedProjectIds,
-        workerId: user.workerId,
+        workerId: effectiveWorkerId,
         permissions: ROLE_PERMISSIONS[user.role] || []
       }
     });
@@ -122,14 +137,14 @@ router.get('/me', requireAuth, async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        name: req.user.name || user.name,
         role: user.role,
         company: user.company,
         avatar: user.avatar,
         phone: user.phone,
-        assignedSiteIds: user.assignedSiteIds,
+        assignedSiteIds: req.user.assignedSiteIds || user.assignedSiteIds,
         assignedProjectIds: user.assignedProjectIds,
-        workerId: user.workerId,
+        workerId: req.user.workerId !== undefined ? req.user.workerId : user.workerId,
         permissions: ROLE_PERMISSIONS[user.role] || []
       }
     });

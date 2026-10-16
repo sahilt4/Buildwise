@@ -22,12 +22,13 @@ export const AttendanceView = () => {
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Poll for attendance updates every 8 seconds for Builder and Manager
+  // Poll for attendance and workforce updates every 4 seconds for Builder and Manager
   useEffect(() => {
     if (userRole === 'worker') return;
+    refreshData(false);
     const interval = setInterval(() => {
       refreshData(false);
-    }, 8000);
+    }, 4000);
     return () => clearInterval(interval);
   }, [userRole, refreshData]);
 

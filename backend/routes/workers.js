@@ -147,6 +147,7 @@ router.post('/:id/toggle-attendance', requireAuth, async (req, res) => {
         workerId: worker.id,
         workerName: worker.name,
         trade: worker.trade,
+        siteId: worker.siteId || 'site-1',
         siteName: worker.siteName,
         time: timeStr,
         date: 'Today',

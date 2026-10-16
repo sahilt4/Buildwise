@@ -5,6 +5,7 @@ const attendanceLogSchema = new mongoose.Schema({
   workerId: { type: String, default: '' },
   workerName: { type: String, required: true },
   trade: { type: String, default: '' },
+  siteId: { type: String, default: '' },
   siteName: { type: String, required: true },
   time: { type: String, required: true },
   date: { type: String, default: 'Today' },
