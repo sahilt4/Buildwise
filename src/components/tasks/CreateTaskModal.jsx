@@ -15,6 +15,13 @@ export const CreateTaskModal = ({ isOpen, onClose }) => {
     dueDate: 'Today'
   });
 
+  // Ensure worker selection defaults to first available worker when modal opens or worker list updates
+  React.useEffect(() => {
+    if (workers.length > 0 && !workers.some(w => w.id === formData.workerId)) {
+      setFormData(prev => ({ ...prev, workerId: workers[0].id }));
+    }
+  }, [workers, isOpen]);
+
   const priorities = ['High', 'Medium', 'Low'];
   const dueDates = ['Today', 'Tomorrow', 'This Week', 'Next Week'];
 

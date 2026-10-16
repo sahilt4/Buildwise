@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const AttendancePunchCard = ({ onOpenQRScanner }) => {
-  const { workers, toggleWorkerAttendance, userRole } = useApp();
+  const { workers, toggleWorkerAttendance, userRole, authUser } = useApp();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update clock every second
@@ -23,8 +23,11 @@ export const AttendancePunchCard = ({ onOpenQRScanner }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Worker record (Amit Patil)
-  const currentWorker = workers.find(w => w.id === 'w-1') || workers[0];
+  // Worker record for active logged-in worker
+  const currentWorker = workers.find(w => 
+    (authUser?.workerId && w.id === authUser.workerId) ||
+    (authUser?.name && w.name.toLowerCase() === authUser.name.toLowerCase())
+  ) || workers[0] || { id: 'w-1', name: authUser?.name || 'Worker', isCheckedIn: false, trade: 'Tradesman', siteName: 'Sunrise Residency' };
   const isCheckedIn = currentWorker?.isCheckedIn;
 
   const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });

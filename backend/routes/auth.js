@@ -37,29 +37,28 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // If worker logging in with their actual name, synchronize name across User and Worker models in MongoDB
+    // If worker logging in with their actual name, find their unique worker profile or create one
     const { workerName, trade } = req.body;
     if (user.role === 'worker' && workerName && workerName.trim()) {
-      user.name = workerName.trim();
-      let workerRecord = null;
-      if (user.workerId) {
-        workerRecord = await Worker.findOne({ id: user.workerId });
-      }
-      if (!workerRecord) {
-        workerRecord = await Worker.findOne({ name: user.name });
-      }
+      const cleanName = workerName.trim();
+      user.name = cleanName;
+
+      // Look up if a worker record already exists with this name
+      let workerRecord = await Worker.findOne({ name: { $regex: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } });
 
       if (workerRecord) {
-        workerRecord.name = workerName.trim();
-        if (trade) workerRecord.trade = trade;
-        await workerRecord.save();
+        user.workerId = workerRecord.id;
+        if (trade) {
+          workerRecord.trade = trade;
+          await workerRecord.save();
+        }
       } else {
-        // Create new worker record in database so site engineer and builder can assign tasks to them
-        const newWorkerId = user.workerId || `w-${Date.now()}`;
+        // Create a unique new worker record in MongoDB so the manager/builder see them in the roster and can assign tasks
+        const newWorkerId = `w-${Date.now()}`;
         user.workerId = newWorkerId;
         await Worker.create({
           id: newWorkerId,
-          name: workerName.trim(),
+          name: cleanName,
           trade: trade || 'Masonry / General Construction',
           category: 'Skilled Trades',
           siteId: (user.assignedSiteIds && user.assignedSiteIds[0]) || 'site-1',

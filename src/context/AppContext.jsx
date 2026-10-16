@@ -977,8 +977,13 @@ export const AppProvider = ({ children }) => {
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
+    const currentWorker = workers.find(w =>
+      (authUser?.workerId && w.id === authUser.workerId) ||
+      (authUser?.name && w.name.toLowerCase() === authUser.name.toLowerCase())
+    ) || workers[0] || { id: 'w-1', name: authUser?.name || 'Worker', trade: 'Master Mason', siteName: siteName || 'Sunrise Residency' };
+
     setWorkers(prev => prev.map(w => {
-      if (w.id === 'w-1') {
+      if (w.id === currentWorker.id) {
         return {
           ...w,
           isCheckedIn: true,
@@ -991,10 +996,10 @@ export const AppProvider = ({ children }) => {
 
     const newLog = {
       id: 'att-' + Date.now(),
-      workerId: 'w-1',
-      workerName: 'Amit Patil',
-      trade: 'Master Mason',
-      siteName: siteName || 'Sunrise Residency',
+      workerId: currentWorker.id,
+      workerName: currentWorker.name,
+      trade: currentWorker.trade,
+      siteName: siteName || currentWorker.siteName,
       time: timeStr,
       date: 'Today',
       status: 'Present',
@@ -1002,15 +1007,15 @@ export const AppProvider = ({ children }) => {
     };
 
     setAttendanceLogs(prev => [newLog, ...prev]);
-    logActivity(`Amit Patil verified QR code at ${siteName || 'Sunrise Residency'}`, 'attendance', 'success');
+    logActivity(`${currentWorker.name} verified QR code at ${siteName || currentWorker.siteName}`, 'attendance', 'success');
     triggerConfetti();
-    addToast(`✓ QR Attendance verified at ${siteName || 'Sunrise Residency'} (${timeStr})`, 'success');
+    addToast(`✓ QR Attendance verified at ${siteName || currentWorker.siteName} (${timeStr})`, 'success');
 
     if (isBackendConnected) {
       try {
-        const res = await api.scanQRAttendance(siteName, 'w-1');
-        if (res.attendanceLog) {
-          setAttendanceLogs(prev => [res.attendanceLog, ...prev.filter(l => l.id !== res.attendanceLog.id)]);
+        const res = await api.scanQRAttendance(siteName || currentWorker.siteName, currentWorker.id);
+        if (res && res.id) {
+          setAttendanceLogs(prev => [res, ...prev.filter(l => l.id !== res.id && l.id !== newLog.id)]);
         }
       } catch (err) {
         console.error('Failed to sync QR attendance:', err);

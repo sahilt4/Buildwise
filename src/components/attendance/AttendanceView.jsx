@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../common/Button';
 import { Badge } from '../common/Badge';
@@ -13,12 +13,30 @@ import {
   Clock,
   Download,
   FileText,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 
 export const AttendanceView = () => {
-  const { attendanceLogs, workers, addToast, userRole } = useApp();
+  const { attendanceLogs, workers, addToast, userRole, refreshData } = useApp();
   const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Poll for attendance updates every 8 seconds for Builder and Manager
+  useEffect(() => {
+    if (userRole === 'worker') return;
+    const interval = setInterval(() => {
+      refreshData(false);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [userRole, refreshData]);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData(false);
+    setIsRefreshing(false);
+    addToast('Attendance roster updated', 'info');
+  };
 
   const isWorker = userRole === 'worker';
   const presentWorkers = workers.filter(w => w.isCheckedIn).length;
@@ -59,6 +77,15 @@ export const AttendanceView = () => {
         </div>
 
         <div className="page-actions">
+          <Button
+            variant="secondary"
+            icon={RefreshCw}
+            disabled={isRefreshing}
+            onClick={handleManualRefresh}
+          >
+            {isRefreshing ? 'Refreshing...' : 'Refresh Roster'}
+          </Button>
+
           <Button
             variant="secondary"
             icon={Download}
