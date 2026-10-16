@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "server.js": "node server.js",
     "build": "cd .. && npm install --include=dev && npm run build",
     "dev": "nodemon server.js",
     "seed": "node seed.js"

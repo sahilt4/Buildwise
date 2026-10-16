@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node backend/server.js",
+    "server.js": "node backend/server.js",
     "build": "vite build",
     "build:render": "npm install && cd backend && npm install && cd .. && npm run build",
     "dev": "vite",
